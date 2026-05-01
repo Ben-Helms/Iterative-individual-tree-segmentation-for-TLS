@@ -10,8 +10,6 @@ In addition, this workflow is designed for plot-level forest inventories, which 
 
 This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a reference subset of Front Range ponderosa pine and Douglas-fir trees from the US Forest Service Forest Inventory and Analysis National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF.
 
-
-   
 ## Processing steps:
 
   * Initial setup 
@@ -51,7 +49,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
   * ***Note***: The tree list should include the dominant tree species being inventoried and correspond to the geographic region of interest. A tree list containing *Pinus ponderosa* (Ponderosa Pine) and *Pseudotsuga menziesii* (Douglas-fir) data obtained from Colorado Front Range FIA plots is included in the repository.
 
-## **Output:** 
+## **Outputs:** 
 
 ### Tree_metrics - A tree list in the form of a CSV file containing the following columns:
   
