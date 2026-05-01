@@ -1,11 +1,43 @@
 # Iterative-individual-tree-segmentation-for-TLS
-This is an R-based workflow used to segment individual trees in point cloud data, then calculate forest structure parameters including diameter at breast height (DBH), tree height (height), canopy base height (CBH), crown width (CW), and tree density. 
+This is an R-based workflow used to segment individual trees in point cloud data and then calculate forest structure parameters, including diameter at breast height (DBH), tree height (height), canopy base height (CBH), crown width (CW), and tree density. 
 
-This workflow is designed for LAS files from ground-based LiDAR scanners (i.e., terrestrial laser scanners and mobile laser scanners), but can process files from any scanning device. However, it uses a bottom-up segmentation approach based on tree bole identification that achieves the most accurate results when a high density of points is present in the understroy. 
+This workflow is designed for LAS files from ground-based LiDAR scanners (i.e., terrestrial and mobile laser scanners), but can process files from any scanning device. However, it uses a bottom-up segmentation approach based on tree bole identification that achieves the most accurate results when a high density of points is present in the understroy. 
 
 In addition, this workflow is designed for plot-level forest inventories, which utilize a circular plot radius with the scan collected at plot center (0, 0). A co-registered multi-scan point cloud bundle can be used so long as the center of the co-registered bundle corresponds to the center of the plot. If mobile laser scanners are being used, the plot center should be georeferenced to the (0, 0) point of the scan. Any plot radius can be used; however, as the plot radius increases, so does occlusion, which can result in improper segmentation ([Gollob et al., 2019](https://doi.org/10.3390/rs11131602)). Thus far, this workflow has only been tested using 11.4 m radius plots (1/10th acre).
 
-## Processing steps and description:
+This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a reference subset of Front Range ponderosa pine and Douglas-fir trees from the US Forest Service Forest Inventory and Analysis National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF.
+
+## Processing steps:
+
+  * Initial setup 
+    * Load packages and input data
+    * Build segmentation data frames
+    * Build empirical cumulative distribution functions (ECDF) for height-DBH and crown width-DBH ratios using FIA data. 
+
+  * For Loop
+    * Initial LAS processing
+      * Extract plot name and read in LAS file
+      * Clip, Thin, Classify Ground, Normalize, and Filter Noise points from the LAS file
+    * Initial segmentation round
+      * Extract tree locations and radii with get_raster_eigen_treelocs()
+      * Segment trees with segment_graph()
+      * Remove segmented trees beyond the plot radius
+      * Calculate plot-level inventory metrics with process_tree_data()
+      * Flag trees based on their height-to-DBH and crown width-to-DBH ratios
+      * Record results from the initial segmentation round
+    * Iterative segmentation while loop
+      * Separate flagged and unflagged trees. Move flagged trees into the resegmentation process. Move Unflagged trees into the final tree list. 
+      * Set stopping criteria
+        * (1) No trees are flagged for resegmentation; (2) two consecutive segmentation rounds yield the same number of flagged trees; (3) ten total segmentation rounds are attempted
+      * Re-segmented flagged trees using the get_raster_eigen_treelocs() and segment_graph() functions
+      * Calculate plot-level inventory metrics with process_tree_data()
+      * Record results from the current segmentation round (includes all unflagged trees and any flagged trees from the most recent round of segmentation)
+      * Check stopping criteria
+      * If the stopping criteria are unmet, continue the re-segmentation process. If the stopping criteria are met, end the while loop
+  * End for loop
+      
+  * Save results from each segmentation attempt and the final tree list. The final tree list includes all unflagged trees and any flagged trees remaining after the final re-segmentation round. 
+
 
 ## **Inputs:** 
 
