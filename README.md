@@ -79,4 +79,27 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
     
 ## Required packages and justification:
 
+* **Primary tree segmentation packages**
+  
+* [*LidR*](https://github.com/r-lidar/lidR), [Roussel et al. (2020)](https://doi.org/10.1016/j.rse.2020.112061)
+  * Used for point cloud processing, including but not limited to:
+    * Clipping to the plot radius,
+    * Decimating,
+    * Classifying ground points,
+    * Normalizing height, 
+    * Identifying and filtering noise points
+   
+ * [*spanner*](https://github.com/bi0m3trics/spanner), [Donager et al. (2021)](https://doi.org/10.3390/rs13122297)
+   * Used for tree identification, segmentation, and metric extraction:
+     * get_raster_eigen_treelocs() - tree location identification 
+     * segment_graph() - tree segmentation,
+     * process_tree_data() - plot-level inventory metric calculation
+       
+* **Supplemental packages**
+ * [*sf*](https://r-spatial.github.io/sf/), [Pebesma (2018)](10.32614/RJ-2018-009)
+   * Used to process SF objects created by spanner
+  
+ * [*dplyr*](https://dplyr.tidyverse.org/)
+   * Used for data manipulation
+     
 ## Considerations
