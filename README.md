@@ -1,4 +1,4 @@
-# Iterative ITS - A tree segmentation for ground-based LiDAR data using an iterative segmentation approach 
+# Iterative ITS - Tree segmentation for ground-based LiDAR data using an iterative approach 
 <p align="center">
   <img width="250" height="250" alt="treeSeg_gif" src="https://github.com/user-attachments/assets/173d250c-4209-48cb-8a02-1ab7f1aad00c" />
 </p>
