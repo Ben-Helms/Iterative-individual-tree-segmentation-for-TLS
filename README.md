@@ -29,7 +29,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
       * Separate flagged and unflagged trees. Move flagged trees into the re-segmentation process. Move Unflagged trees into the final tree list. 
       * Set stopping criteria
         * (1) No trees are flagged for re-segmentation; (2) two consecutive segmentation rounds yield the same number of flagged trees; (3) ten total segmentation rounds are completed
-      * Re-segmented flagged trees using the get_raster_eigen_treelocs() and segment_graph() functions
+      * Re-segment flagged trees using the get_raster_eigen_treelocs() and segment_graph() functions
       * Calculate plot-level inventory metrics with process_tree_data()
       * Record results from the current segmentation round (includes all unflagged trees and any flagged trees from the most recent round of segmentation)
       * Check stopping criteria
