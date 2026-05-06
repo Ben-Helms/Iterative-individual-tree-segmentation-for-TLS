@@ -42,7 +42,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
 ## **Inputs:** 
 
-  1 - A list of LAS files (this repository comes with an example file in the scanInput folder. Be sure to ignore this folder if pushing the project back to the repository because most LAS files are too large to upload). 
+  1 - A list of LAS files (this repository comes with an example file in the scanInput folder. Be sure to ignore this folder if pushing the project back to the repository because most LAS files are too large to upload properly).  
   
   2 - A CSV containing manually collected tree diameter and height data used as the reference data to build the ECDFs for the iterative re-segmentation process. Crown width was estimated using equations from Bechtold (2004). 
 
