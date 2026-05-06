@@ -1,6 +1,6 @@
 # Iterative ITS - Tree segmentation for ground-based LiDAR data using an iterative approach 
 <p align="center">
-  <img width="250" height="250" alt="treeSeg_gif" src="https://github.com/user-attachments/assets/173d250c-4209-48cb-8a02-1ab7f1aad00c" />
+  <img width="250" height="250" alt="treeSeg_gif" src="https://github.com/user-attachments/assets/df429d94-7544-4ca9-9fa0-628d5c2bce4d" />
 </p>
 
 This is an R-based workflow used to segment individual trees in point cloud data and then calculate forest structure parameters, including diameter at breast height (DBH), tree height (height), canopy base height (CBH), crown width (CW), and tree density. This workflow is designed for LAS files from ground-based LiDAR scanners (i.e., terrestrial and mobile laser scanners), using a bottom-up segmentation approach based on tree bole identification. As such, it achieves the most accurate results when a high density of points is present in the understory. 
