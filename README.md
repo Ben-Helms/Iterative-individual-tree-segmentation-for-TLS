@@ -5,7 +5,7 @@
 
 This is an R-based workflow used to segment individual trees in point cloud data and then calculate forest structure parameters, including diameter at breast height (DBH), tree height (height), canopy base height (CBH), crown width (CW), and tree density. This workflow is designed for LAS files from ground-based LiDAR scanners (i.e., terrestrial and mobile laser scanners), using a bottom-up segmentation approach based on tree bole identification. As such, it achieves the most accurate results when a high density of points is present in the understory. 
 
-This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a subset of reference trees from the US Forest Service Forest Inventory and Analysis (FIA) National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF. This repository comes with a reference subset of Front Range ponderosa Pine (*Pinus ponderosa*) and Douglas-fir (*Pseudotsuga menziesii*) trees. The reference tree list should be updated to reflect the ecosystem of interest.
+This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a subset of reference trees from the US Forest Service Forest Inventory and Analysis (FIA) National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF. This repository comes with a reference subset of Front Range ponderosa pine (*Pinus ponderosa*) and Douglas-fir (*Pseudotsuga menziesii*) trees. The reference tree list should be updated to reflect the ecosystem of interest.
 
 ## Processing steps:
 
@@ -17,7 +17,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
   * For Loop
     * Initial LAS processing
       * Extract plot name and read in LAS file
-      * Clip, Thin, Classify Ground, Normalize, and Filter Noise points from the LAS file
+      * Clip radius, decimate points, classify ground points, normalize height, and filter noise points from the LAS file
     * Initial segmentation round
       * Extract tree locations and radii with get_raster_eigen_treelocs()
       * Segment trees with segment_graph()
@@ -42,11 +42,11 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
 ## **Inputs:** 
 
-  1 - A list of LAS files (this repo comes with an example file. Be sure to remove any additional LAS files if pushing the entire project back to the repo because additional files are too large to upload properly). 
+  1 - A list of LAS files (this repository comes with an example file in the scanInput folder. Be sure to ignore this folder if pushing the project back to the repository because additional files are too large to upload properly). 
   
-  2 - A CSV containing manually collected tree diameter and height data used as the reference data to build an empirical cumulative distribution function (ECDF) for the iterative re-segmentation process. Crown width can be estimated using equations from Bechtold (2004). 
+  2 - A CSV containing manually collected tree diameter and height data used as the reference data to build the ECDFs for the iterative re-segmentation process. Crown width was estimated using equations from Bechtold (2004). 
 
-  * ***Note***: The tree list should include the dominant tree species being inventoried and correspond to the geographic region of interest. A tree list containing ponderosa Pine (*Pinus ponderosa*) and Douglas-fir (*Pseudotsuga menziesii*) data obtained from Colorado Front Range FIA plots is included in the repository.
+  * ***Note***: The tree list should include the dominant tree species being inventoried and correspond to the geographic region of interest. A tree list containing ponderosa pine (*Pinus ponderosa*) and Douglas-fir (*Pseudotsuga menziesii*) data obtained from Colorado Front Range FIA plots is included in the repository.
 
 ## **Outputs:** 
 
@@ -72,13 +72,13 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
   * **CW-DBH_Quant** - The quantile of the ECDF that the crown width-DBH ratio fell within
 
-  * **flag** - True/false data denoting if the tree was flagged based on the quantile values. If true, the Ht-DBH or CW-DBH quantile fell outside of the central 80th percentile of the ECDF (i.e., quantile < 0.10 or quantile > 0.90). If false, the Ht-DBH or CW-DBH quantile fell inside the central 80th percentile of the ECDF (i.e., 0.10 ≤ quantile ≤ 0.90).
+  * **flag** - TRUE/FALSE data denoting if the tree was flagged based on the quantile values. If TRUE, the Ht-DBH_Quant or CW-DBH_Quant fell outside of the central 80th percentile of the ECDF (i.e., quantile < 0.10 or quantile > 0.90). If FALSE, the Ht-DBH_Quant or CW-DBH_Quant fell inside the central 80th percentile of the ECDF (i.e., 0.10 ≤ quantile ≤ 0.90).
     
-  * **Segmentation_Attempt** - The segmentation attempt where the tree was added to the final tree list. If flag = true, the tree was added after the final segmentation attempt.
+  * **Segmentation_Attempt** - The segmentation attempt where the tree was added to the final tree list. If flag = TRUE, the tree was added after the final segmentation attempt.
 
-  * **X and Y** geometry columns for each tree's location in reference to the center of the plot. 
+  * **X** and **Y** geometry columns for each tree's location in reference to the center of the plot. 
    
-  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (i.e., the tree list for attempt 2 contains all trees segmented in the initial attempt, attempt 1, and attempt 2). 
+  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (i.e., the tree list for attempt 2 contains all unflagged trees from the initial attempt and attempt 1, and all trees regardless of flag status in attempt 2). 
     
 ## Required packages and justification:
 
@@ -86,8 +86,8 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
   
 * [*LidR*](https://github.com/r-lidar/lidR), [Roussel et al. (2020)](https://doi.org/10.1016/j.rse.2020.112061)
   * Used for point cloud processing, including but not limited to:
-    * Clipping to the plot radius,
-    * Decimating,
+    * Clipping the point cloud radius,
+    * Decimating the number of points,
     * Classifying ground points,
     * Normalizing height, 
     * Identifying and filtering noise points
@@ -107,7 +107,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
      
 ## Considerations
 
-To date, this workflow has only been evaluated in Colorado Front Range dry-conifer forests. Segmentation parameters have been adjusted for this forest type, and additional parameter tuning may be required for other ecosystems. 
+To date, this workflow has only been evaluated in Colorado Front Range dry-conifer forests. Segmentation parameters have been adjusted for this forest type. Additional parameter tuning may be required for other ecosystems. 
 
 Species cannot be identified with this workflow. Accordingly, the ECDFs are built by combining the allometries of the dominant species and applying these to all trees. This likely has a minimal effect in forests with low species diversity and where dominant species have similar growth forms. However, this may cause erroneous flagging if allometries from highly diverse forests are being used. 
 
