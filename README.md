@@ -14,7 +14,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
     * Build forest structure parameter data frames
     * Build ECDFs for height-DBH and crown width-DBH ratios using FIA data. 
 
-  * For Loop
+  * Start for loop
     * Initial LAS processing
       * Extract plot name and read in LAS file
       * Clip radius, decimate points, classify ground points, normalize height, and filter noise points from the LAS file
