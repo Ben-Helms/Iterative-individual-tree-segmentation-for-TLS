@@ -76,7 +76,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
     
   * **Segmentation_Attempt** - The segmentation attempt where the tree was added to the final tree list. If flag = TRUE, the tree was added after the final segmentation attempt.
 
-  * **X** and **Y** - geometry columns for each tree's location in reference to the center of the plot. 
+  * **X** and **Y** - Geometry columns for each tree's location in reference to the center of the plot. 
    
   * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (e.g., the tree list for attempt 2 contains all unflagged trees from the initial attempt and attempt 1, and all trees regardless of flag status from attempt 2). 
     
