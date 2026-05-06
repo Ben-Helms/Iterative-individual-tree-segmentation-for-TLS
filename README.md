@@ -78,7 +78,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
   * **X** and **Y** - geometry columns for each tree's location in reference to the center of the plot. 
    
-  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (i.e., the tree list for attempt 2 contains all unflagged trees from the initial attempt and attempt 1, and all trees regardless of flag status from attempt 2). 
+  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (e.g., the tree list for attempt 2 contains all unflagged trees from the initial attempt and attempt 1, and all trees regardless of flag status from attempt 2). 
     
 ## Required packages and justification:
 
