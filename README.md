@@ -50,7 +50,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
 ## **Outputs:** 
 
-### Tree_metrics - A tree list in the form of a CSV file containing the following columns:
+### Forest_Structure_Estimation_Output.csv - A tree list in the form of a CSV file containing the following columns:
   
   * **Plot name** - The exact name of the plot defined at the beginning of the processing loop
 
