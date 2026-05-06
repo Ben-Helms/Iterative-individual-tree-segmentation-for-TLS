@@ -5,7 +5,7 @@
 
 This is an R-based workflow used to segment individual trees in point cloud data and then calculate forest structure parameters, including diameter at breast height (DBH), tree height (height), canopy base height (CBH), crown width (CW), and tree density. This workflow is designed for LAS files from ground-based LiDAR scanners (i.e., terrestrial and mobile laser scanners), using a bottom-up segmentation approach based on tree bole identification. As such, it achieves the most accurate results when a high density of points is present in the understory. 
 
-This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a subset of reference trees from the US Forest Service Forest Inventory and Analysis (FIA) National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF. This repository comes with a reference subset of Front Range ponderosa Pine (*Pinus ponderosa* ) and Douglas-fir (*Pseudotsuga menziesii*) trees. The reference tree list should be updated to reflect the ecosystem of interest.
+This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a subset of reference trees from the US Forest Service Forest Inventory and Analysis (FIA) National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF. This repository comes with a reference subset of Front Range ponderosa Pine (*Pinus ponderosa*) and Douglas-fir (*Pseudotsuga menziesii*) trees. The reference tree list should be updated to reflect the ecosystem of interest.
 
 ## Processing steps:
 
@@ -28,7 +28,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
     * Iterative segmentation while loop
       * Separate flagged and unflagged trees. Move flagged trees into the re-segmentation process. Move Unflagged trees into the final tree list. 
       * Set stopping criteria
-        * (1) No trees are flagged for resegmentation; (2) two consecutive segmentation rounds yield the same number of flagged trees; (3) ten total segmentation rounds are completed
+        * (1) No trees are flagged for re-segmentation; (2) two consecutive segmentation rounds yield the same number of flagged trees; (3) ten total segmentation rounds are completed
       * Re-segmented flagged trees using the get_raster_eigen_treelocs() and segment_graph() functions
       * Calculate plot-level inventory metrics with process_tree_data()
       * Record results from the current segmentation round (includes all unflagged trees and any flagged trees from the most recent round of segmentation)
@@ -42,11 +42,11 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
 ## **Inputs:** 
 
-  1 - A list of LAS files.
+  1 - A list of LAS files (this repo comes with an example file. Be sure to remove any additional LAS files if pushing the entire project back to the repo because additional files are too large to upload properly). 
   
-  2 - A CSV containing manually collected tree diameter and height data used as the reference data to build an empirical cumulative distribution function (ECDF) for the iterative resegmentation process. Crown width can be estimated using equations from Bechtold (2004). 
+  2 - A CSV containing manually collected tree diameter and height data used as the reference data to build an empirical cumulative distribution function (ECDF) for the iterative re-segmentation process. Crown width can be estimated using equations from Bechtold (2004). 
 
-  * ***Note***: The tree list should include the dominant tree species being inventoried and correspond to the geographic region of interest. A tree list containing ponderosa Pine (*Pinus ponderosa* ) and Douglas-fir (*Pseudotsuga menziesii*) data obtained from Colorado Front Range FIA plots is included in the repository.
+  * ***Note***: The tree list should include the dominant tree species being inventoried and correspond to the geographic region of interest. A tree list containing ponderosa Pine (*Pinus ponderosa*) and Douglas-fir (*Pseudotsuga menziesii*) data obtained from Colorado Front Range FIA plots is included in the repository.
 
 ## **Outputs:** 
 
@@ -95,7 +95,7 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
  * [*spanner*](https://github.com/bi0m3trics/spanner), [Donager et al. (2021)](https://doi.org/10.3390/rs13122297)
    * Used for tree identification, segmentation, and metric extraction:
      * get_raster_eigen_treelocs() - tree location identification 
-     * segment_graph() - tree segmentation,
+     * segment_graph() - tree segmentation
      * process_tree_data() - plot-level inventory metric calculation
        
 * **Supplemental packages**
@@ -107,5 +107,9 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
      
 ## Considerations
 
-This workflow is designed for plot-level forest inventories, which utilize a circular plot radius with the scan collected at plot center (0, 0). A co-registered multi-scan point cloud bundle can be used so long as the center of the co-registered bundle corresponds to the center of the plot. If mobile laser scanners are being used, the plot center should be georeferenced to the (0, 0) point of the scan. Any plot radius can be used; however, as the plot radius increases, so does occlusion, which can result in improper segmentation ([Gollob et al., 2019](https://doi.org/10.3390/rs11131602)). Thus far, this workflow has only been tested using 11.4 m radius plots (1/10th acre).
+To date, this workflow has only been evaluated in Colorado Front Range dry-conifer forests. Segmentation parameters have been adjusted for this forest type, and additional parameter tuning may be required for other ecosystems. 
+
+Species cannot be identified with this workflow. Accordingly, the ECDFs are built by combining the allometries of the dominant species and applying these to all trees. This likely has a minimal effect in forests with low species diversity and where dominant species have similar growth forms. However, this may cause erroneous flagging if allometries from highly diverse forests are being used. 
+
+This workflow is designed for plot-level forest inventories, which utilize a circular plot radius with the scan collected at plot center (0, 0). A co-registered multi-scan point cloud bundle can be used so long as the center of the co-registered bundle corresponds to the center of the plot. If mobile laser scanners are being used, the plot center should be georeferenced to the (0, 0) point of the scan. Any plot radius can be used; however, as the plot radius increases, occlusion increases as well, which can result in improper segmentation ([Gollob et al., 2019](https://doi.org/10.3390/rs11131602)). Thus far, this workflow has only been tested using 11.4 m radius plots (1/10th acre).
 
