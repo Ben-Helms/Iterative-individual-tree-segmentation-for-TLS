@@ -72,13 +72,13 @@ This workflow is unique in that it utilizes multiple rounds of segmentation to r
 
   * **CW-DBH_Quant** - The quantile of the ECDF that the crown width-DBH ratio fell within
 
-  * **flag** - TRUE/FALSE data denoting if the tree was flagged based on the quantile values. If TRUE, the Ht-DBH_Quant or CW-DBH_Quant fell outside of the central 80th percentile of the ECDF (i.e., quantile < 0.10 or quantile > 0.90). If FALSE, the Ht-DBH_Quant or CW-DBH_Quant fell inside the central 80th percentile of the ECDF (i.e., 0.10 ≤ quantile ≤ 0.90).
+  * **flag** - TRUE/FALSE data denoting whether the tree was flagged based on the quantile values. If TRUE, the Ht-DBH_Quant or CW-DBH_Quant fell outside of the central 80th percentile of the ECDF (i.e., quantile < 0.10 or quantile > 0.90). If FALSE, the Ht-DBH_Quant or CW-DBH_Quant fell inside the central 80th percentile of the ECDF (i.e., 0.10 ≤ quantile ≤ 0.90).
     
   * **Segmentation_Attempt** - The segmentation attempt where the tree was added to the final tree list. If flag = TRUE, the tree was added after the final segmentation attempt.
 
   * **X** and **Y** - geometry columns for each tree's location in reference to the center of the plot. 
    
-  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (i.e., the tree list for attempt 2 contains all unflagged trees from the initial attempt and attempt 1, and all trees regardless of flag status in attempt 2). 
+  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (i.e., the tree list for attempt 2 contains all unflagged trees from the initial attempt and attempt 1, and all trees regardless of flag status from attempt 2). 
     
 ## Required packages and justification:
 
