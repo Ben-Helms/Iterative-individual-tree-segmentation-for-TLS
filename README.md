@@ -1,0 +1,111 @@
+# Iterative ITS - Tree segmentation for ground-based LiDAR data using an iterative approach 
+<p align="center">
+  <img width="250" height="250" alt="treeSeg_gif" src="https://github.com/user-attachments/assets/173d250c-4209-48cb-8a02-1ab7f1aad00c" />
+</p>
+
+This is an R-based workflow used to segment individual trees in point cloud data and then calculate forest structure parameters, including diameter at breast height (DBH), tree height (height), canopy base height (CBH), crown width (CW), and tree density. This workflow is designed for LAS files from ground-based LiDAR scanners (i.e., terrestrial and mobile laser scanners), using a bottom-up segmentation approach based on tree bole identification. As such, it achieves the most accurate results when a high density of points is present in the understory. 
+
+This workflow is unique in that it utilizes multiple rounds of segmentation to reduce errors. Trees that require re-segmentation are identified using empirical cumulative distribution functions (ECDF) for height-to-DBH and crown width-to-DBH ratios built from a subset of reference trees from the US Forest Service Forest Inventory and Analysis (FIA) National Forest Inventory dataset. Segmented trees that require re-segmentation are defined as those with allometries that fall beyond the central 80th percentile of either ECDF. This repository comes with a reference subset of Front Range ponderosa Pine (*Pinus ponderosa* ) and Douglas-fir (*Pseudotsuga menziesii*) trees. The reference tree list should be updated to reflect the ecosystem of interest.
+
+## Processing steps:
+
+  * Initial setup 
+    * Load packages and input data
+    * Build forest structure parameter data frames
+    * Build ECDFs for height-DBH and crown width-DBH ratios using FIA data. 
+
+  * For Loop
+    * Initial LAS processing
+      * Extract plot name and read in LAS file
+      * Clip, Thin, Classify Ground, Normalize, and Filter Noise points from the LAS file
+    * Initial segmentation round
+      * Extract tree locations and radii with get_raster_eigen_treelocs()
+      * Segment trees with segment_graph()
+      * Remove segmented trees beyond the plot radius
+      * Calculate plot-level inventory metrics with process_tree_data()
+      * Flag trees based on their height-to-DBH and crown width-to-DBH ratios
+      * Record results from the initial segmentation round
+    * Iterative segmentation while loop
+      * Separate flagged and unflagged trees. Move flagged trees into the re-segmentation process. Move Unflagged trees into the final tree list. 
+      * Set stopping criteria
+        * (1) No trees are flagged for resegmentation; (2) two consecutive segmentation rounds yield the same number of flagged trees; (3) ten total segmentation rounds are completed
+      * Re-segmented flagged trees using the get_raster_eigen_treelocs() and segment_graph() functions
+      * Calculate plot-level inventory metrics with process_tree_data()
+      * Record results from the current segmentation round (includes all unflagged trees and any flagged trees from the most recent round of segmentation)
+      * Check stopping criteria
+      * If the stopping criteria are NOT met, continue the re-segmentation process. If the stopping criteria are met, end the while loop
+      * Store the final tree list dataframe
+        
+  * End for loop
+      
+  * Save results from each segmentation attempt and the final tree list. The final tree list includes all unflagged trees and any flagged trees remaining after the final re-segmentation round. 
+
+## **Inputs:** 
+
+  1 - A list of LAS files.
+  
+  2 - A CSV containing manually collected tree diameter and height data used as the reference data to build an empirical cumulative distribution function (ECDF) for the iterative resegmentation process. Crown width can be estimated using equations from Bechtold (2004). 
+
+  * ***Note***: The tree list should include the dominant tree species being inventoried and correspond to the geographic region of interest. A tree list containing ponderosa Pine (*Pinus ponderosa* ) and Douglas-fir (*Pseudotsuga menziesii*) data obtained from Colorado Front Range FIA plots is included in the repository.
+
+## **Outputs:** 
+
+### Tree_metrics - A tree list in the form of a CSV file containing the following columns:
+  
+  * **Plot name** - The exact name of the plot defined at the beginning of the processing loop
+
+  * **Unique_treeID** - A tree ID for each tree in a plot
+
+  * **HT.m.** - Individual tree height in meters 
+
+  * **DBH.m.** - Individual tree diameter at breast height in meters 
+
+  * **CBH.m.** - Individual tree crown base height in meters 
+
+  * **CW.m.** - Individual tree crown width in meters 
+
+  * **Ht-DBH_ratio** - Individual tree height to DBH ratio
+
+  * **CW-DBH_ratio** - Individual tree crown width to DBH ratio
+
+  * **Ht-DBH_Quant** - The quantile of the ECDF that the height-DBH ratio fell within 
+
+  * **CW-DBH_Quant** - The quantile of the ECDF that the crown width-DBH ratio fell within
+
+  * **flag** - True/false data denoting if the tree was flagged based on the quantile values. If true, the Ht-DBH or CW-DBH quantile fell outside of the central 80th percentile of the ECDF (i.e., quantile < 0.10 or quantile > 0.90). If false, the Ht-DBH or CW-DBH quantile fell inside the central 80th percentile of the ECDF (i.e., 0.10 ≤ quantile ≤ 0.90).
+    
+  * **Segmentation_Attempt** - The segmentation attempt where the tree was added to the final tree list. If flag = true, the tree was added after the final segmentation attempt.
+
+  * **X and Y** geometry columns for each tree's location in reference to the center of the plot. 
+   
+  * ***Note*** - A tree list for each segmentation attempt (Initial_attempt through Attempt_10) is also calculated and can be saved as a CSV. Each attempt includes all trees segmented up to the most current attempt (i.e., the tree list for attempt 2 contains all trees segmented in the initial attempt, attempt 1, and attempt 2). 
+    
+## Required packages and justification:
+
+* **Primary tree segmentation packages**
+  
+* [*LidR*](https://github.com/r-lidar/lidR), [Roussel et al. (2020)](https://doi.org/10.1016/j.rse.2020.112061)
+  * Used for point cloud processing, including but not limited to:
+    * Clipping to the plot radius,
+    * Decimating,
+    * Classifying ground points,
+    * Normalizing height, 
+    * Identifying and filtering noise points
+   
+ * [*spanner*](https://github.com/bi0m3trics/spanner), [Donager et al. (2021)](https://doi.org/10.3390/rs13122297)
+   * Used for tree identification, segmentation, and metric extraction:
+     * get_raster_eigen_treelocs() - tree location identification 
+     * segment_graph() - tree segmentation,
+     * process_tree_data() - plot-level inventory metric calculation
+       
+* **Supplemental packages**
+ * [*sf*](https://r-spatial.github.io/sf/), [Pebesma (2018)](10.32614/RJ-2018-009)
+   * Used to process SF objects created by spanner
+  
+ * [*dplyr*](https://dplyr.tidyverse.org/)
+   * Used for data manipulation
+     
+## Considerations
+
+This workflow is designed for plot-level forest inventories, which utilize a circular plot radius with the scan collected at plot center (0, 0). A co-registered multi-scan point cloud bundle can be used so long as the center of the co-registered bundle corresponds to the center of the plot. If mobile laser scanners are being used, the plot center should be georeferenced to the (0, 0) point of the scan. Any plot radius can be used; however, as the plot radius increases, so does occlusion, which can result in improper segmentation ([Gollob et al., 2019](https://doi.org/10.3390/rs11131602)). Thus far, this workflow has only been tested using 11.4 m radius plots (1/10th acre).
+
