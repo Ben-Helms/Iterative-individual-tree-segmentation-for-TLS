@@ -16,58 +16,13 @@ files <- list.files(pattern = ".las", path = inDir, full.names = TRUE)
 
 # Build data frames 
 # Data frame for final tree list
-Tree_metrics <- data.frame(
-  "Plot Name" = character(),
-  "treeID" = numeric(),
-  "HT.m." = numeric(),
-  "DBH.m." = numeric(),
-  "CBH.m." = numeric(),
-  "CW.m." = numeric(),
-  "Ht-DBH_ratio" = numeric(),
-  "CW-DBH_ratio" = numeric(),
-  "Ht-DBH_Quant" = numeric(),
-  "CW-DBH_Quant" = numeric(),
-  "flag" = logical(),
-  "Segmentation_Attempt" = integer(),
-  "X" = numeric(),
-  "Y" = numeric(),
-  stringsAsFactors = FALSE,
-  check.names = FALSE
-)
-
-# Data frame for the initial segmentation metrics
-Initial_Metrics_Master <- data.frame(
-  "Plot Name" = character(),
-  "treeID" = numeric(),
-  "HT.m." = numeric(),
-  "DBH.m." = numeric(),
-  "CBH.m." = numeric(),
-  "CW.m." = numeric(),
-  "Ht-DBH_ratio" = numeric(),
-  "CW-DBH_ratio" = numeric(),
-  "Ht-DBH_Quant" = numeric(),
-  "CW-DBH_Quant" = numeric(),
-  "flag" = logical(),
-  stringsAsFactors = FALSE,
-  check.names = FALSE
-)
-
-# Data frame for logging the re-segmentation attempts
-Resegmentation_logs <- data.frame(
-  Plot = character(),
-  Attempt = integer(),
-  Trees_Initially_Segmented = integer(),
-  Trees_Flagged_For_Next_Attempt = integer(),
-  Status = character(),
-  stringsAsFactors = FALSE
-)
+Tree_metrics <- data.frame()
 
 # Build master list for all re-segmentation attempts
 All_Intermediate_Metrics_List <- list()
 
 # Build empirical cumulative distribution function for height-DBH ratio
 FIA_predictions <- read.csv("./FIA_data/FIA_Prediction_Data.csv") # found in the RProject. Can use your own data if desired
-FIA_predictions <- as.data.frame(FIA_predictions)
 
 # Calculate height/DBH allometry from FIA trees 
 FIA_predictions <- FIA_predictions %>%
@@ -194,21 +149,7 @@ for (file_path in files) {
       Segmentation_Attempt = 0
     ) %>%
     rename("treeID" = "TreeID")
-
-  # Create a summarized data frame with all initial metrics (good and flagged)
-  plot_initial_summary <- initial_tree_metrics %>%
-    mutate("Plot Name" = plot_name) %>%
-    dplyr::select(
-      "Plot Name", "treeID", "HT.m.", "DBH.m.", "CBH.m.", "CW.m.",
-      "Ht-DBH_ratio", "CW-DBH_ratio",
-      "Ht-DBH_Quant", "CW-DBH_Quant", "flag"
-    ) %>%
-    dplyr::select(names(Initial_Metrics_Master)) %>%
-    st_drop_geometry()
-
-  # Bind to the Initial_Metrics_Master 
-  Initial_Metrics_Master <- bind_rows(Initial_Metrics_Master, plot_initial_summary)
-
+  
   # Record Attempt 0 in the intermediate metrics list
   initial_list_entry <- initial_tree_metrics %>%
     mutate(
@@ -233,17 +174,7 @@ for (file_path in files) {
 
   # Use the initial segmented LAS for re-segmentation.
   current_segmentedLAS <- Individual_Tree_Seg
-
-  # Initialize the log data frame for the current plot
-  resegmentation_log <- data.frame(
-    Plot = character(),
-    Attempt = integer(),
-    Trees_Initially_Segmented = integer(),
-    Trees_Flagged_For_Next_Attempt = integer(),
-    Status = character(),
-    stringsAsFactors = FALSE
-  )
-
+  
   # Start while loop for re-segmentation 
   
   max_attempts <- 10
@@ -277,53 +208,26 @@ for (file_path in files) {
     }
 
     # Initialize log status
-    log_status <- ""
 
     # Define while loop stopping conditions
     # Stop condition A: No trees flagged
     if (num_flagged == 0) {
-      log_status <- "Finished: No more trees flagged"
+      break
     }
 
     # Stop condition B: Tree list contains only flagged trees twice in a row. 
     if (consecutive_failure_count == 2) {
-      log_status <- "Finished: Redundancy Detected (>2 Consecutive Failures)"
       cat(paste("Redundancy detected. >2 consecutive failures. Stopping.\n"))
       final_tree_metrics <- bind_rows(final_tree_metrics, flagged_trees_next_round)
+      break
     }
 
     # Stop condition C: 10 attempts reached
     if (attempt >= max_attempts) {
-      log_status <- paste0("Finished: Max attempts (", max_attempts, ") reached")
       cat(paste("Maximum attempts (", max_attempts, ") reached. Stopping.\n"))
       final_tree_metrics <- bind_rows(final_tree_metrics, flagged_trees_next_round)
-    }
-
-    # Log and stop if any stop condition was met
-    if (log_status != "") {
-      log_entry <- data.frame(
-        Plot = plot_name,
-        Attempt = attempt,
-        Trees_Initially_Segmented = initial_segmented_count,
-        Trees_Flagged_For_Next_Attempt = num_flagged,
-        Status = log_status,
-        stringsAsFactors = FALSE
-      )
-      resegmentation_log <- bind_rows(resegmentation_log, log_entry)
       break
     }
-
-    # Log successful continuation
-    log_status <- paste0("Continuing (Flagged: ", num_flagged, " trees)")
-    log_entry <- data.frame(
-      Plot = plot_name,
-      Attempt = attempt,
-      Trees_Initially_Segmented = initial_segmented_count,
-      Trees_Flagged_For_Next_Attempt = num_flagged,
-      Status = log_status,
-      stringsAsFactors = FALSE
-    )
-    resegmentation_log <- bind_rows(resegmentation_log, log_entry)
 
     # Filter las to only include flagged trees 
     las_to_resegment <- filter_poi(current_segmentedLAS, treeID %in% flagged_trees_next_round$treeID)
@@ -349,13 +253,16 @@ for (file_path in files) {
         inliers = 0.9,
         conf = 0.99,
         max_angle = 20)
+      },
+      error = function(e) {
+        message("Segmentation fail for", plot_name)
+        return(NULL)
       }
     )
     
     if (is.null(inventory_flagged) || nrow(inventory_flagged) == 0) {
       message(paste("Resegmentation complete:", plot_name, "— No additonal trees found."))
       final_tree_metrics <- bind_rows(final_tree_metrics, flagged_trees_next_round) 
-      log_status <- "Finished: Segmentation Failed (No Stems Found)"
       break 
     }
 
@@ -404,18 +311,8 @@ for (file_path in files) {
       ) %>%
       rename("treeID" = "TreeID")
 
-    # Create a final tally for each re-segmentation iteration
-    # Select the columns needed from the already finalized good trees list
-    final_good_trees_for_log <- final_tree_metrics %>%
-      dplyr::select(any_of(names(current_tree_metrics_to_process))) %>%
-      mutate(
-        "Plot Name" = plot_name,
-        "Attempt" = attempt,
-        "Status" = "Final Tally: Good Tree"
-      )
-
     # Combine all trees evaluated in this attempt (both good & flagged) with the finalized trees
-    full_tally_for_log <- bind_rows(final_good_trees_for_log, current_tree_metrics_to_process) %>%
+    full_tally_for_log <- bind_rows(final_tree_metrics, current_tree_metrics_to_process) %>%
       mutate(
         "Plot Name" = plot_name,
         "Attempt" = attempt,
@@ -441,10 +338,7 @@ for (file_path in files) {
     attempt <- attempt + 1
 
   } # End of while loop
-
-  # Append plot log to final tree list  
-  Resegmentation_logs <- bind_rows(Resegmentation_logs, resegmentation_log)
-
+  
   # Summarize and store individual tree metrics
   if (nrow(final_tree_metrics) > 0) {
     plot_summary <- final_tree_metrics %>%
