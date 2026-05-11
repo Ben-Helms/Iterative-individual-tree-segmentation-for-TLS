@@ -112,9 +112,11 @@ for (file_path in files) {
   inventory <- inventory %>% 
   mutate(dist.m. = sqrt(st_coordinates(.)[, "X"]^2 + st_coordinates(.)[, "Y"]^2)) %>%
   filter(dist.m. <= 11.34)
-  
-  # Filter segmented LAS to include trees within the plot radius
+
+  # Ensure treeIDs match between inventory and segmented LAS
   Individual_Tree_Seg <- filter_poi(segmentedLAS, treeID %in% inventory$TreeID)
+  inventory <- inventory %>%
+    filter(TreeID %in% unique(Individual_Tree_Seg$treeID))
   
   # Calculate plot-level initial inventory metrics via spanner 
   tree_metrics <- process_tree_data(treeData = inventory, segmentedLAS = Individual_Tree_Seg, return_sf = FALSE)
@@ -279,11 +281,11 @@ for (file_path in files) {
       return.dense = FALSE
     )
     
-    # Ensure treeID's match between inventory and segmentation 
-    treeID_in_seg <- unique(segmentedLAS_flagged_new$treeID)
+    # Ensure treeID's match between inventory and segmentation
     inventory_flagged <- inventory_flagged %>%
-      filter(TreeID %in% treeID_in_seg)
-
+      filter(TreeID %in% unique(segmentedLAS_flagged_new$treeID))
+    segmentedLAS_flagged_new <- filter_poi(segmentedLAS_flagged_new, treeID %in% inventory_flagged$TreeID)
+    
     # Process plot-level inventory metrics via spanner and clean/rename columns
     tree_metrics_flagged_new <- process_tree_data(treeData = inventory_flagged, segmentedLAS = segmentedLAS_flagged_new, return_sf = FALSE) %>%
       mutate(
